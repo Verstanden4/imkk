@@ -29,8 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
             progressBar: document.getElementById('progress-bar-P2')
         },
         backgroundMusic: document.getElementById('background-music'),
-        // ELEMEN SUARA KLIK DIAMBIL
-        clickSound: document.getElementById('click-sound')
+        clickSound: document.getElementById('click-sound'),
+        // ELEMEN SUARA KEMENANGAN DIAMBIL
+        winSound: document.getElementById('win-sound')
     };
     
     // --- KONTROL MUSIK LATAR ---
@@ -39,24 +40,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (ui.backgroundMusic && !isMusicStarted) {
             ui.backgroundMusic.play().then(() => {
                 isMusicStarted = true;
-                // Listener ini akan dihapus setelah musik berhasil diputar
                 document.body.removeEventListener('click', tryPlayMusic);
             }).catch(error => {
                 console.log("Browser memblokir pemutaran otomatis, menunggu interaksi pengguna selanjutnya.");
             });
         }
     }
-    // Menambahkan listener untuk memulai musik pada klik pertama
     document.body.addEventListener('click', tryPlayMusic);
 
-    // --- KONTROL SUARA KLIK (BARU) ---
+    // --- KONTROL SUARA KLIK ---
     function playClickSound() {
         if (ui.clickSound) {
-            ui.clickSound.currentTime = 0; // Mengatur ulang suara agar bisa diklik berulang kali
+            ui.clickSound.currentTime = 0;
             ui.clickSound.play().catch(e => console.log("Gagal memutar suara klik:", e));
         }
     }
-    // Menambahkan listener untuk memutar suara pada setiap klik mouse
     document.addEventListener('click', playClickSound);
 
 
@@ -195,17 +193,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const scoreP2 = gameState.scores.P2;
         
         let finalScoreText, gameOutcomeMessage;
+        let didWin = false; // Flag untuk menandai kemenangan
 
         if (gameState.mode === 'one-player') {
             finalScoreText = `Skor Anda: ${scoreP1} / ${gameState.maxQuestions}`;
-            gameOutcomeMessage = (scoreP1 === gameState.maxQuestions) ? "<br>Sempurna! Selamat!" : "<br>Game Selesai!";
-        } else {
+            if (scoreP1 === gameState.maxQuestions) {
+                gameOutcomeMessage = "<br>Sempurna! Selamat!";
+                didWin = true; // Menang jika skor sempurna
+            } else {
+                gameOutcomeMessage = "<br>Game Selesai!";
+            }
+        } else { // two-player mode
             finalScoreText = `Skor P1: ${scoreP1} | Skor P2: ${scoreP2}`;
-            if (scoreP1 > scoreP2) gameOutcomeMessage = "<br>Pemain 1 Menang!";
-            else if (scoreP2 > scoreP1) gameOutcomeMessage = "<br>Pemain 2 Menang!";
-            else gameOutcomeMessage = "<br>Seri!";
+            if (scoreP1 > scoreP2) {
+                gameOutcomeMessage = "<br>Pemain 1 Menang!";
+                didWin = true;
+            } else if (scoreP2 > scoreP1) {
+                gameOutcomeMessage = "<br>Pemain 2 Menang!";
+                didWin = true;
+            } else {
+                gameOutcomeMessage = "<br>Seri!";
+            }
         }
         ui.scoreDisplay.innerHTML = `${finalScoreText}${gameOutcomeMessage}`;
+        
+        // Putar suara kemenangan jika menang
+        if (didWin && ui.winSound) {
+            ui.winSound.play().catch(e => console.log("Gagal memutar suara kemenangan:", e));
+        }
         
         renderHistoryTable();
     }
